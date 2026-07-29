@@ -122,6 +122,33 @@ def test_patch_partial_update_keeps_other_fields(client, created_task):
     assert body["assignee"] == created_task["assignee"]
 
 
+def test_patch_empty_json_body_returns_existing_task_unchanged(client):
+    create_r = client.post(
+        "/tasks",
+        json={
+            "title": "Task to leave unchanged",
+            "description": "Original description",
+            "status": "ToDo",
+            "priority": "High",
+            "assignee": "Alice",
+        },
+    )
+
+    assert create_r.status_code == 201
+    created_task = create_r.json()
+
+    r = client.patch(f"/tasks/{created_task['id']}", json={})
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["id"] == created_task["id"]
+    assert body["title"] == created_task["title"]
+    assert body["description"] == created_task["description"]
+    assert body["status"] == created_task["status"]
+    assert body["priority"] == created_task["priority"]
+    assert body["assignee"] == created_task["assignee"]
+
+
 def test_patch_not_found_returns_404(client):
     task_id = "does-not-exist"
 
