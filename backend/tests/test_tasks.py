@@ -190,7 +190,7 @@ def test_patch_invalid_transition_todo_to_done_returns_422(
     assert r.status_code == 422
 
 
-def test_patch_same_status_returns_422(client, created_task):
+def test_patch_same_status_returns_200_and_keeps_status(client, created_task):
     task_id = created_task["id"]
 
     r = client.patch(
@@ -198,7 +198,8 @@ def test_patch_same_status_returns_422(client, created_task):
         json={"status": "ToDo"},
     )
 
-    assert r.status_code == 422
+    assert r.status_code == 200
+    assert r.json()["status"] == "ToDo"
 
 
 def test_delete_existing_returns_204_no_body(client, created_task):
