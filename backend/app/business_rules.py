@@ -1,5 +1,8 @@
 # FILE: app/business_rules.py
 
+from datetime import date
+from typing import Optional
+
 from fastapi import HTTPException, status
 
 from app.models import TaskStatus
@@ -33,3 +36,11 @@ def validate_status_transition(
                 f"to {new.value}. Allowed transitions: {allowed}"
             ),
         )
+
+
+def is_overdue(due_date: Optional[date], status: TaskStatus) -> bool:
+    if due_date is None:
+        return False
+    if status == TaskStatus.DONE:
+        return False
+    return due_date < date.today()
