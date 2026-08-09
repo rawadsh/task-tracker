@@ -20,10 +20,13 @@ Both are additive extensions of the existing Task resource, chosen to stay insid
 - Frontend adds a date input to the task form and renders `due_date`/`overdue` exactly as the backend returns them — no client-side overdue math.
 
 **Tags:**
-- `tags: list[str]` added to `TaskCreate`, `TaskUpdate`, `TaskResponse` in `models.py`.
-- Validation (trim whitespace, reject blank tags, bound max count and max length per tag) is a `field_validator` in `models.py` — the same pattern already used for `title` validation (`_validate_title`), since this is field-shape validation, not cross-field business logic.
+- `tags: list[str]` is supported on `TaskCreate`, `TaskUpdate`, and `TaskResponse` in `models.py`.
+- On create, omitted `tags` defaults to `[]`.
+- On PATCH, providing `tags` replaces the full list; `tags: []` clears it, while omitting `tags` preserves the existing list.
+- Validation (trim whitespace, reject blank tags, maximum 10 tags, maximum 30 characters per tag) is a `field_validator` in `models.py` — the same pattern already used for `title` validation (`_validate_title`), since this is field-shape validation, not cross-field business logic.
 - Tags are stored inline on the same in-memory `Task` record — no separate tag collection/entity.
 - `storage.py`'s `get_all_tasks` gains a `tag` filter parameter alongside the existing `status`/`priority` filters.
+- Tag filtering is single-value, exact-match, and case-sensitive.
 - Frontend adds a tags input (comma-separated entry, rendered as chips) to the task form, chip display on cards, and a tag filter control.
 
 ## 3. Alternatives considered
@@ -49,7 +52,8 @@ Both are additive extensions of the existing Task resource, chosen to stay insid
 ## 6. AI-assisted decision making
 
 - **Feature 1:** an earlier AI-drafted plan proposed supporting `overdue=false` as a symmetric boolean filter alongside `overdue=true`. The human developer rejected this — only `overdue=true` is in scope; `overdue=false` is explicitly not implemented.
-- No Tags-specific assumption has been corrected yet at this design stage — that section will only be added if/when it actually happens during implementation, not assumed in advance.
+
+- **Feature 2:** AI initially identified several unresolved assumptions during user-story planning: whether omitted `tags` should default to `[]`, the maximum tag count and tag length, whether PATCH should replace or merge tags, and whether tag filtering should be single-value, exact-match, and case-sensitive. The human developer confirmed these decisions: omitted `tags` defaults to `[]`; the maximum is 10 tags per task and 30 characters per tag; PATCH uses full-replacement semantics (`tags: []` clears tags while omitted `tags` preserves them); and tag filtering is single-value, exact-match, and case-sensitive.
 
 ## 7. Implementation boundaries
 
