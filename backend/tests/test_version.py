@@ -7,7 +7,7 @@ def test_version_returns_app_and_package_versions(client):
     assert response.status_code == 200
     body = response.json()
 
-    assert "app_version" in body
+    assert "app_version_typo" in body
     assert "packages" in body
 
     assert set(body["packages"].keys()) == set(TRACKED_PACKAGES)
