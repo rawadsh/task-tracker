@@ -23,15 +23,14 @@ Task Tracker implementation completed for the current module, including:
 
 ### Start the backend
 
-From the project root, activate the backend virtual environment:
-
+From the project root, set up the virtual environment and install dependencies:
 
 ```powershell
-Set-Location backend
 python -m venv venv
 venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 Copy-Item .env.example .env
+Set-Location backend
 ```
 
 > **Version pins:** `requirements.txt` uses minimum-version constraints. After the first install, verify the resolved versions with `pip freeze`. Replace `requirements.txt` with `pip freeze > requirements.txt` if you want fully reproducible installs.
@@ -57,6 +56,14 @@ Expected response shape (timestamp will differ):
 ```json
 { "status": "ok", "timestamp": "2026-07-25T20:15:00.123456+00:00" }
 ```
+
+## Test the /version endpoint
+
+```powershell
+curl.exe http://127.0.0.1:8000/version
+```
+
+Returns the app version and the installed versions of the core runtime dependencies (fastapi, pydantic, uvicorn, python-dotenv).
 
 ## Open the frontend
 
@@ -96,9 +103,12 @@ Redoc UI is also available at http://127.0.0.1:8000/redoc.
 task-tracker/
   .gitignore
   README.md
+  requirements.txt
+  .env.example
+  .github/
+    workflows/
+      ci.yml
   backend/
-    .env.example
-    requirements.txt
     app/
       __init__.py
       main.py

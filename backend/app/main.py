@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timezone
+from importlib.metadata import version as _pkg_version
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status
@@ -18,6 +19,8 @@ app = FastAPI(
     description="Module 1 learning project — in-memory Task Tracker.",
     version="0.1.0",
 )
+
+TRACKED_PACKAGES = ("fastapi", "pydantic", "uvicorn", "python-dotenv")
 
 LOCAL_FRONTEND_ORIGINS = [
     "http://localhost:5500",
@@ -39,6 +42,14 @@ def health() -> dict:
     return {
         "status": "ok",
         "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@app.get("/version")
+def get_version() -> dict:
+    return {
+        "app_version": app.version,
+        "packages": {name: _pkg_version(name) for name in TRACKED_PACKAGES},
     }
 
 

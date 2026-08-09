@@ -399,3 +399,43 @@ Test results:
 ```text
 pytest tests/test_tags.py -v
 15 passed
+```
+
+---
+
+# Add-on — /version endpoint
+
+### Prompt 1 — /version endpoint (plan)
+
+**Prompt given to Claude:**
+
+> i want to add a /version endpoint to app/main.py that returns the package versions.
+> propose a plan only. do not edit any files yet
+
+**Why this reads as a weak-leaning prompt:**
+
+It stated the goal and the file to touch but left several implementation decisions open: which packages count as "the" packages (just runtime deps, or everything in `requirements.txt` including test tools like `pytest`/`httpx`?), what shape the response should take, and whether to use a typed Pydantic model like the `/tasks` endpoints or a plain dict like `/health`.
+
+**What Claude did:**
+
+Claude asked clarifying questions before finalizing the plan. I answered the package-scope question (core runtime deps only: `fastapi`, `pydantic`, `uvicorn`, `python-dotenv`) but left the response-shape and typing questions unanswered on a second round. Claude proceeded with the stated recommended defaults (app version + packages dict; plain dict, no Pydantic model — matching `/health`'s existing style) and flagged those as assumptions in the written plan rather than guessing silently.
+
+**What I accepted/edited/rejected:**
+
+I accepted the plan as written, including the two default assumptions, via plan-mode approval.
+
+---
+
+### Prompt 2 — /version endpoint (implementation)
+
+**Prompt given to Claude:**
+
+Implicit continuation after plan approval — no new prompt text; the approved plan itself was the instruction (exit-plan-mode approval).
+
+**What Claude did:**
+
+Implemented the endpoint in `backend/app/main.py` using `importlib.metadata.version()` for the 4 tracked packages, added `backend/tests/test_version.py`, and added a short `/version` section to `README.md` next to the existing `/health` section. Ran the new test (`1 passed`), then the full suite (`48 passed`), then manually started the server and curled `/version` to confirm real installed versions were returned, cross-checked against `pip freeze`-equivalent values.
+
+**What I accepted/edited/rejected:**
+
+Accepted as implemented — matches the approved plan exactly, all 48 tests pass, and the manual curl check returned real installed version strings for all 4 tracked packages.

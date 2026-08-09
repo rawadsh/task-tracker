@@ -8,19 +8,20 @@ A small learning-project Task Tracker: a FastAPI + Pydantic backend with an in-m
 
 ## Commands
 
-All backend commands run from `backend/` with the venv activated (`venv\Scripts\Activate.ps1` on Windows).
+Set up the venv and install dependencies from the project root; run the server and tests from `backend/` with that same venv activated (`venv\Scripts\Activate.ps1` on Windows).
 
 ```powershell
-# Setup (first time)
+# Setup (first time, from project root)
 python -m venv venv
 venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 Copy-Item .env.example .env
 
-# Run the API (http://127.0.0.1:8000, docs at /docs, /redoc)
+# Run the API (from backend/, http://127.0.0.1:8000, docs at /docs, /redoc)
+Set-Location backend
 uvicorn app.main:app --reload --port 8000
 
-# Run all tests
+# Run all tests (from backend/)
 pytest tests/ -v
 
 # Run one feature's tests
