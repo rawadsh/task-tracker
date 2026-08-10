@@ -58,11 +58,36 @@ class TaskCreate(BaseModel):
     @field_validator("title")
     @classmethod
     def validate_title(cls, v: str) -> str:
+        """Validate and normalize the title field.
+
+        Args:
+            v: The raw title value.
+
+        Returns:
+            str: The trimmed title.
+
+        Raises:
+            ValueError: If the trimmed title is blank or exceeds 200
+                characters (surfaces as a 422 response).
+        """
         return _validate_title(v)
 
     @field_validator("tags")
     @classmethod
     def validate_tags(cls, v: list[str]) -> list[str]:
+        """Validate and normalize the tags field.
+
+        Args:
+            v: The raw list of tag strings.
+
+        Returns:
+            list[str]: The trimmed tags, in the same order.
+
+        Raises:
+            ValueError: If more than MAX_TAG_COUNT tags are given, any
+                tag is blank after trimming, or any tag exceeds
+                MAX_TAG_LENGTH characters (surfaces as a 422 response).
+        """
         return _validate_tags(v)
 
 
@@ -80,6 +105,19 @@ class TaskUpdate(BaseModel):
     @field_validator("title")
     @classmethod
     def validate_title(cls, v: Optional[str]) -> Optional[str]:
+        """Validate and normalize the title field, if provided.
+
+        Args:
+            v: The raw title value, or None if title is unset.
+
+        Returns:
+            Optional[str]: None if v is None, otherwise the trimmed
+                title.
+
+        Raises:
+            ValueError: If v is not None and the trimmed title is blank
+                or exceeds 200 characters (surfaces as a 422 response).
+        """
         if v is None:
             return v
         return _validate_title(v)
@@ -87,6 +125,21 @@ class TaskUpdate(BaseModel):
     @field_validator("tags")
     @classmethod
     def validate_tags(cls, v: Optional[list[str]]) -> Optional[list[str]]:
+        """Validate and normalize the tags field, if provided.
+
+        Args:
+            v: The raw list of tag strings, or None if tags is unset.
+
+        Returns:
+            Optional[list[str]]: None if v is None, otherwise the
+                trimmed tags in the same order.
+
+        Raises:
+            ValueError: If v is not None and more than MAX_TAG_COUNT
+                tags are given, any tag is blank after trimming, or any
+                tag exceeds MAX_TAG_LENGTH characters (surfaces as a 422
+                response).
+        """
         if v is None:
             return v
         return _validate_tags(v)
@@ -109,6 +162,16 @@ class TaskResponse(BaseModel):
     @computed_field
     @property
     def overdue(self) -> bool:
+        """Whether this task is currently overdue.
+
+        Computed at read/serialization time from due_date and status via
+        business_rules.is_overdue — never persisted, so a task can
+        become overdue purely from the passage of time without any
+        write (see CLAUDE.md).
+
+        Returns:
+            bool: True if overdue, False otherwise.
+        """
         from app.business_rules import is_overdue
 
         return is_overdue(self.due_date, self.status)

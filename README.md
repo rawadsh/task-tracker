@@ -1,108 +1,146 @@
 # Task Tracker
 
-A small learning-project Task Tracker API built with FastAPI and Pydantic. Module 1 of an AI-assisted development course.
+## 1. Project overview
 
-## Status
-Task Tracker implementation completed for the current module, including:
+A small, in-memory Task Tracker API built with FastAPI and Pydantic, with a
+static vanilla-JS/HTML frontend. It started as the Module 1 project of an
+AI-assisted development course (see `docs/midcourse/`) and has since been
+extended through Module 4 [VERIFY: module numbering per your course — not
+documented in-repo] with a GitHub Actions CI workflow and a Dockerfile for
+local containerized runs.
 
-- Task CRUD operations
-- Status and priority handling
-- Due dates and backend-computed overdue status
-- Overdue filtering
-- Task tags and exact/case-sensitive tag filtering
-- Web frontend
-- Automated backend tests
+This module does not add deployment, authentication, or a database — see
+[Project conventions and current limitations](#9-project-conventions-and-current-limitations).
 
-## Requirements
+Current features:
+- Task CRUD, status and priority handling
+- Optional due dates and backend-computed, never-persisted overdue status
+- Overdue-only filtering (`overdue=true`)
+- Task tags with exact, case-sensitive filtering
+- Browser-based frontend
+- Automated backend tests and CI enforcement
+
+## 2. Prerequisites
+
 - Python 3.11 or newer
+  ([VERIFY]: CI and the Dockerfile pin exactly 3.11; local dev has been run
+  successfully on 3.12/3.13 too, but 3.11 is the only version proven in CI)
 - `pip` (bundled with Python)
+- Git
+- Docker Desktop — only needed for [Run with Docker](#6-run-with-docker)
 
-## Setup
+## 3. Local setup
 
-## Run the application
-
-### Start the backend
-
-From the project root, set up the virtual environment and install dependencies:
+From the project root:
 
 ```powershell
 python -m venv venv
 venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 Copy-Item .env.example .env
-Set-Location backend
 ```
 
-> **Version pins:** `requirements.txt` uses minimum-version constraints. After the first install, verify the resolved versions with `pip freeze`. Replace `requirements.txt` with `pip freeze > requirements.txt` if you want fully reproducible installs.
+> `requirements.txt` uses minimum-version (`>=`) constraints, not pins.
+> After installing, run `pip freeze` to see the resolved versions.
 
-## Run
+## 4. Run the app locally
 
-From `backend/` with the venv activated:
+The app package lives at `backend/app`, so move into `backend/` before
+starting uvicorn (venv stays activated regardless of working directory):
 
 ```powershell
+Set-Location backend
 uvicorn app.main:app --reload --port 8000
 ```
 
-The server starts at http://127.0.0.1:8000.
+The API is available at http://127.0.0.1:8000 — Swagger UI at `/docs`,
+ReDoc at `/redoc`.
 
-## Test the /health endpoint
+Quick checks, from a second terminal:
 
 ```powershell
 curl.exe http://127.0.0.1:8000/health
-```
-
-Expected response shape (timestamp will differ):
-
-```json
-{ "status": "ok", "timestamp": "2026-07-25T20:15:00.123456+00:00" }
-```
-
-## Test the /version endpoint
-
-```powershell
 curl.exe http://127.0.0.1:8000/version
 ```
 
-Returns the app version and the installed versions of the core runtime dependencies (fastapi, pydantic, uvicorn, python-dotenv).
+`/health` returns `{"status": "ok", "timestamp": "..."}`. `/version` returns
+the app version plus installed versions of fastapi, pydantic, uvicorn, and
+python-dotenv.
 
-## Open the frontend
+To also run the frontend, from the project root in another terminal:
 
-With the backend running, open a second terminal from the project root and start a simple HTTP server for the frontend:
-
+```powershell
 Set-Location frontend
 python -m http.server 5500
+```
 
-## Run the tests
+CORS is only configured for `http://localhost:5500` / `http://127.0.0.1:5500`
+— serving the frontend on a different port will get its requests blocked.
 
-From the backend/ directory with the virtual environment activated:
+## 5. Run tests
 
+```powershell
+Set-Location backend
 pytest tests/ -v
+```
 
-This runs the complete backend test suite, including tests for:
+Runs the complete backend suite: task CRUD, status/priority, due dates,
+overdue filtering, tags and tag filtering, CORS behavior, and the
+health/version endpoints.
 
-task CRUD operations
-status and priority
-due dates
-overdue filtering
-tags and tag filtering
-CORS behavior
+Run one feature's tests:
 
-## To run a specific feature's tests:
-
+```powershell
 pytest tests/test_due_dates.py -v
 pytest tests/test_tags.py -v
+```
 
-## Interactive API docs (Swagger)
+Run a single test:
 
-Open **http://127.0.0.1:8000/docs** in your browser.
-Redoc UI is also available at http://127.0.0.1:8000/redoc.
+```powershell
+pytest tests/test_tasks.py::test_name -v
+```
 
-## Project structure
+## 6. Run with Docker
+
+From the project root:
+
+```powershell
+docker build -t task-tracker:local .
+docker run --rm -p 8000:8000 task-tracker:local
+```
+
+Then check http://127.0.0.1:8000/health. The image is a multi-stage build
+on `python:3.11-slim`, runs as a non-root `app` user, and starts
+`uvicorn app.main:app --host 0.0.0.0 --port 8000` (no `--reload`).
+`.env` is excluded via `.dockerignore` — no secrets are baked into the
+image; the app runs on its defaults (`APP_ENV=development`) unless you pass
+`-e` flags to `docker run`. This module does not configure a deployment
+target — the image is for local use only.
+
+## 7. CI workflow summary
+
+`.github/workflows/ci.yml` runs on every `push` and on `pull_request`
+targeting `main`:
+
+- Checks out the repo (`actions/checkout@v4`)
+- Sets up Python **3.11** exactly (`actions/setup-python@v5`)
+- Installs dependencies from the repo root:
+  `python -m pip install --upgrade pip` then `pip install -r requirements.txt`
+- Runs `pytest -v` with `working-directory: backend`
+
+There are no deployment, build-and-push, or publish steps — CI only
+validates that the test suite passes.
+
+## 8. Project structure
 
 ```text
 task-tracker/
   .gitignore
+  .dockerignore
+  Dockerfile
   README.md
+  CLAUDE.md
   requirements.txt
   .env.example
   .github/
@@ -116,10 +154,14 @@ task-tracker/
       storage.py
       business_rules.py
     tests/
+      conftest.py
       test_cors.py
-      test_tasks.py
       test_due_dates.py
+      test_health.py
       test_tags.py
+      test_tasks.py
+      test_version.py
+      verify_a.py        # [VERIFY] standalone script, not collected by pytest
   frontend/
     index.html
   docs/
@@ -129,19 +171,39 @@ task-tracker/
       verification.md
       prompt-log.md
       reflection.md
+```
 
-```markdown
-## Current features
+## 9. Project conventions and current limitations
 
-The application currently supports:
+- **Layering**: `main.py` (routes only) → `business_rules.py` (cross-field
+  rules) → `storage.py` (persistence); field-level validation lives in
+  `models.py` as Pydantic `field_validator`s. See `CLAUDE.md` for the full
+  convention.
+- **PATCH semantics**: `TaskUpdate` uses `model_dump(exclude_unset=True)` —
+  an omitted field is left untouched; an explicit `null`/`[]` overwrites it.
+- **Overdue is never persisted** — it's a `@computed_field` recomputed from
+  `due_date` + `status` on every read.
+- **Tag filtering** is single-value, exact-match, and case-sensitive — no
+  partial or case-insensitive matching (see `docs/midcourse/mini-adr.md`).
+- **Storage is in-memory only** — a single process-level dict. All data is
+  lost on restart; there is no database.
+- **No authentication** is implemented, and no database is used.
+- **Not production-ready**: no persistence, no auth, no deployment
+  configuration. Scope is local development, automated tests, CI
+  validation, and a local Docker image only.
+- [VERIFY] `business_rules.py`'s inline comment above `VALID_TRANSITIONS`
+  ("Same -> same is invalid") contradicts the set's actual contents and
+  test coverage — same-status transitions are allowed. See the function's
+  docstring.
+- [VERIFY] `backend/tests/verify_a.py` is a standalone script not collected
+  by `pytest`; its intended purpose isn't documented anywhere in the repo.
 
-- Creating, editing, viewing, and deleting tasks
-- Task status and priority
-- Optional due dates
-- Backend-computed overdue status
-- Overdue-only filtering
-- Comma-separated task tags
-- Tag trimming and backend validation
-- Exact, case-sensitive tag filtering
-- Combining tag and overdue filters
-- Browser-based task management
+## 10. Decision record
+
+Design decisions and rejected alternatives for the due-dates and tags
+features are recorded in
+[`docs/midcourse/mini-adr.md`](docs/midcourse/mini-adr.md). Related process
+docs: [`user-stories.md`](docs/midcourse/user-stories.md),
+[`verification.md`](docs/midcourse/verification.md),
+[`prompt-log.md`](docs/midcourse/prompt-log.md),
+[`reflection.md`](docs/midcourse/reflection.md).
