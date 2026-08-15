@@ -439,3 +439,54 @@ Implemented the endpoint in `backend/app/main.py` using `importlib.metadata.vers
 **What I accepted/edited/rejected:**
 
 Accepted as implemented — matches the approved plan exactly, all 48 tests pass, and the manual curl check returned real installed version strings for all 4 tracked packages.
+
+---
+
+# Module 5 — Context-Strategy Comparison (docs/architecture.md)
+
+### Prompt 1 — Compare three context strategies and draft the comparison log
+
+**Prompt given to Claude:**
+
+> I ran the same architecture-document task with three context strategies.
+> Strategy A: minimal context. Strategy B: structured context using
+> AGENTS.md and file summaries. Strategy C: targeted context using a small
+> set of anchor files. Task: Compare the three outputs and help me write
+> the comparison log for docs/architecture.md. For each strategy, identify
+> what it got right, what it got wrong/missed/invented, and which task
+> shape it is best suited for. Then help me write a verdict (which
+> strategy I chose for the final architecture doc and why) and a
+> two-sentence context-engineering rule ("For task shape X, I use strategy
+> Y because Z."). Constraints: use only the three pasted drafts, do not
+> invent repo facts, do not rewrite the entire architecture document
+> unless asked, keep the comparison specific.
+
+**What Claude did:**
+
+Claude read all three drafts (`docs/architecture-A.md`, `-B.md`, `-C.md`)
+and, rather than taking their claims at face value, cross-checked each
+factual claim against the actual source
+(`backend/app/models.py`, `storage.py`, `business_rules.py`, `main.py`,
+`AGENTS.md`, `frontend/index.html`) before writing the comparison. This
+surfaced that Draft B correctly identified stale documentation (the
+README's `[VERIFY]` note about a `VALID_TRANSITIONS` contradiction that no
+longer exists in the code) and that Draft C had read `main.py`'s CORS
+config but didn't use it, understating its own evidence. Claude proposed a
+comparison table, a verdict recommending Strategy B, and a two-sentence
+rule, then stopped and asked for confirmation before writing anything to
+`docs/architecture.md`, per this repo's Module 5 guardrail requiring exact
+proposed changes to be shown and approved first.
+
+**What I accepted/edited/rejected:**
+
+I confirmed the verdict (Strategy B) and the draft text as proposed, with
+no edits, and approved creating `docs/architecture.md` with that exact
+content.
+
+**Why this was a strong prompt:**
+
+It supplied the exact three inputs to use, an explicit output format,
+and hard constraints (no invented repo facts, no unscoped rewrite of the
+architecture doc) — which let Claude verify claims against source instead
+of just comparing prose, and kept the file-write gated behind explicit
+approval rather than happening automatically.
