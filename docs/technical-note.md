@@ -1,6 +1,6 @@
 # Technical Decision Note: CI Workflow Design
 
-**Status:** Draft
+**Status:** Final
 **Module:** Module 4 — Task Tracker
 **Scope:** `.github/workflows/ci.yml`. This application has no authentication, no database, and no configured deployment target — nothing below should be read as claiming otherwise.
 
@@ -39,8 +39,6 @@ The workflow defines one job, `test`, on `runs-on: ubuntu-latest`, with exactly 
 
 ## 4. Trade-offs
 
-DRAFT - REWRITE IN MY OWN WORDS
-
 - Pinning Actions by tag (`@v4`/`@v5`) is easier to read and maintain than a 40-character SHA, but relies on the tag never being repointed to different code. [VERIFY: real-world likelihood of this for `actions/checkout`/`actions/setup-python` specifically]
 - Testing only Python 3.11 keeps CI simple and matches the Docker image, but gives no automated signal about behavior on any other Python version.
 - Because `ci.yml` never builds the Docker image, nothing in CI automatically catches a broken `Dockerfile` — that has so far only been checked by manually running `docker build`/`docker run` outside of CI.
@@ -55,15 +53,11 @@ DRAFT - REWRITE IN MY OWN WORDS
 
 ## 6. Open Questions
 
-DRAFT - REWRITE IN MY OWN WORDS
-
 - [VERIFY] Is branch protection enabled on `main` so a failing CI run actually blocks merging, or is the status currently advisory-only?
 - [VERIFY] Does the course expect a Python version matrix, or is pinning to exactly 3.11 (matching the Dockerfile) sufficient?
 - Is SHA-pinning `actions/checkout`/`actions/setup-python` worth the maintenance cost for a small learning project, versus the current tag-based approach?
 - Would a Docker build-only step in CI (no push, no deploy) be a worthwhile smoke check, given the Dockerfile currently has no automated verification at all?
 
-**README inconsistencies found during verification (not fixed here, per instructions not to modify README.md):**
+**README inconsistencies found during verification (not fixed here; README.md was later updated for unrelated CI-evidence reasons in this project's final-project pass, but these two specific discrepancies were left as-is, per instructions not to change them without authorization):**
 - README §5 documents the run-tests command as `pytest tests/ -v`, while `ci.yml` actually runs `pytest -v` (no path argument). Both were run in this session and collected the same 48 tests, but the two documented command strings differ.
 - `backend/tests/test_health.py` is confirmed empty (0 bytes) — `pytest` collects no test for `/health` from it. README §5 currently describes the suite as covering "the health/version endpoints," but only `/version` has an actual test (`test_version.py`).
-
-I would do this differently by...

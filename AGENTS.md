@@ -90,8 +90,8 @@ not feature development.
 - Start read-only: inspect relevant files before making repository claims or
   proposing changes.
 - Prefer documentation work first. Edit only `docs/` by default.
-- Do not modify `app/` unless the user explicitly approves one specific,
-  minimal fix.
+- Do not modify `app/` or `frontend/` unless the user explicitly approves one
+  specific, minimal fix.
 - Before editing any file, show the exact proposed change and obtain explicit
   approval.
 - Cite the actual files inspected for every repository claim. If a file is
