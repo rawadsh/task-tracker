@@ -8,7 +8,7 @@ A small learning-project Task Tracker: a FastAPI + Pydantic backend with an in-m
 
 ## Commands
 
-Set up the venv and install dependencies from the project root; run the server and tests from `backend/` with that same venv activated (`venv\Scripts\Activate.ps1` on Windows).
+Set up the venv and install dependencies from the project root; run the server and tests from the project root with that same venv activated (`venv\Scripts\Activate.ps1` on Windows).
 
 ```powershell
 # Setup (first time, from project root)
@@ -17,11 +17,10 @@ venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 Copy-Item .env.example .env
 
-# Run the API (from backend/, http://127.0.0.1:8000, docs at /docs, /redoc)
-Set-Location backend
+# Run the API (http://127.0.0.1:8000, docs at /docs, /redoc)
 uvicorn app.main:app --reload --port 8000
 
-# Run all tests (from backend/)
+# Run all tests
 pytest tests/ -v
 
 # Run one feature's tests
@@ -39,13 +38,13 @@ Set-Location frontend
 python -m http.server 5500
 ```
 
-The backend's CORS config only allows `http://localhost:5500` / `http://127.0.0.1:5500` as frontend origins (`backend/app/main.py`) — if you serve the frontend on a different port, requests will be blocked.
+The backend's CORS config only allows `http://localhost:5500` / `http://127.0.0.1:5500` as frontend origins (`app/main.py`) — if you serve the frontend on a different port, requests will be blocked.
 
 `requirements.txt` uses minimum-version (`>=`) constraints, not pins. After installing, `pip freeze` shows the resolved versions.
 
 ## Architecture
 
-Backend is a 4-module layered design under `backend/app/`, each with one job:
+Backend is a 4-module layered design under `app/`, each with one job:
 
 - **`models.py`** — Pydantic schemas: `TaskCreate` (POST body), `TaskUpdate` (PATCH body, all fields optional), `TaskResponse` (API output). All use `extra="forbid"` so unknown fields 422 instead of being silently dropped. Field-level validation (title trim/length, tag trim/count/length) lives here as `field_validator`s, since it's shape validation of a single field, not cross-field business logic. `TaskResponse.overdue` is a `@computed_field`, not a stored value.
 - **`business_rules.py`** — cross-field/domain rules that don't belong on a single field: status-transition legality (`validate_status_transition`) and the overdue predicate (`is_overdue`). Both `models.py` (computed field) and `storage.py` (the `overdue=true` filter) call `is_overdue` so there is exactly one definition of "overdue."

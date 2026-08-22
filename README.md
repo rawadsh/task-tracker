@@ -45,11 +45,10 @@ Copy-Item .env.example .env
 
 ## 4. Run the app locally
 
-The app package lives at `backend/app`, so move into `backend/` before
-starting uvicorn (venv stays activated regardless of working directory):
+The app package lives at `app/` at the repository root, so run uvicorn from
+the project root (venv stays activated regardless of working directory):
 
 ```powershell
-Set-Location backend
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -80,7 +79,6 @@ CORS is only configured for `http://localhost:5500` / `http://127.0.0.1:5500`
 ## 5. Run tests
 
 ```powershell
-Set-Location backend
 pytest tests/ -v
 ```
 
@@ -127,7 +125,7 @@ targeting `main`:
 - Sets up Python **3.11** exactly (`actions/setup-python@v5`)
 - Installs dependencies from the repo root:
   `python -m pip install --upgrade pip` then `pip install -r requirements.txt`
-- Runs `pytest -v` with `working-directory: backend`
+- Runs `pytest -v` from the repository root
 
 There are no deployment, build-and-push, or publish steps — CI only
 validates that the test suite passes.
@@ -146,22 +144,21 @@ task-tracker/
   .github/
     workflows/
       ci.yml
-  backend/
-    app/
-      __init__.py
-      main.py
-      models.py
-      storage.py
-      business_rules.py
-    tests/
-      conftest.py
-      test_cors.py
-      test_due_dates.py
-      test_health.py
-      test_tags.py
-      test_tasks.py
-      test_version.py
-      verify_a.py        # [VERIFY] standalone script, not collected by pytest
+  app/
+    __init__.py
+    main.py
+    models.py
+    storage.py
+    business_rules.py
+  tests/
+    conftest.py
+    test_cors.py
+    test_due_dates.py
+    test_health.py
+    test_tags.py
+    test_tasks.py
+    test_version.py
+    verify_a.py        # [VERIFY] standalone script, not collected by pytest
   frontend/
     index.html
   docs/
@@ -195,7 +192,7 @@ task-tracker/
   ("Same -> same is invalid") contradicts the set's actual contents and
   test coverage — same-status transitions are allowed. See the function's
   docstring.
-- [VERIFY] `backend/tests/verify_a.py` is a standalone script not collected
+- [VERIFY] `tests/verify_a.py` is a standalone script not collected
   by `pytest`; its intended purpose isn't documented anywhere in the repo.
 
 ## 10. Decision record
@@ -243,27 +240,30 @@ Copy-Item .env.example .env
 ```
 
 ```powershell
-Set-Location backend
 uvicorn app.main:app --reload --port 8000
 ```
 
 ### How to run tests
 
-From `backend/`:
+From the repository root:
 
 ```powershell
 pytest tests/ -v
 ```
 
-This is the command documented in [§5 Run tests](#5-run-tests) and the
-one actually run to produce the `48 passed, 2 warnings, 0 failed` result
-recorded in `docs/release-evidence.md`. Note: `.github/workflows/ci.yml`
-runs `pytest -v` (no `tests/` path argument) from the same `backend`
-working directory. In this repository's current test layout, both
-commands were observed to collect the same 48 tests
-(`docs/release-evidence.md` §1, §7, and §9) — that is a statement about this
-specific working directory and test layout, not a claim that the two
-command strings are interchangeable in general.
+This is the command documented in [§5 Run tests](#5-run-tests). It was run
+from `backend/` (the repository layout at the time) to produce the
+`48 passed, 2 warnings, 0 failed` result recorded in
+`docs/release-evidence.md`. At that time, `.github/workflows/ci.yml` ran
+`pytest -v` (no `tests/` path argument) from that same `backend` working
+directory; both commands were observed to collect the same 48 tests
+(`docs/release-evidence.md` §1, §7, and §9) — that was a statement about
+that specific working directory and test layout, not a claim that the two
+command strings are interchangeable in general. Following this
+final-project structural correction, `app/` and `tests/` now live at the
+repository root and `ci.yml` runs `pytest -v` from the repository root
+(no `working-directory` override) — see the CI workflow file itself for
+the current, authoritative configuration.
 
 ### How to run with Docker
 

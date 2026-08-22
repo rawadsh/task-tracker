@@ -2,7 +2,7 @@
 
 ## 1. Data Model
 
-Add comment request/response models in `backend/app/models.py`, alongside `TaskCreate`, `TaskUpdate`, and `TaskResponse`.
+Add comment request/response models in `app/models.py`, alongside `TaskCreate`, `TaskUpdate`, and `TaskResponse`.
 
 Proposed models:
 
@@ -18,11 +18,11 @@ Follow the repository’s existing Pydantic conventions:
 
 Store comments separately from `TaskResponse`. The current task model represents task fields inline, while a comment is a distinct, repeatable record associated with a task. Adding a `comments` array to `TaskResponse` would change every existing task response shape, which `AGENTS.md` says not to do without explicit approval.
 
-No new business rule is currently evident in `backend/app/business_rules.py`: author/body requirements are single-field validation, and task existence can be checked through storage. If later requirements introduce comment permissions or lifecycle rules, that would be the appropriate layer for them.
+No new business rule is currently evident in `app/business_rules.py`: author/body requirements are single-field validation, and task existence can be checked through storage. If later requirements introduce comment permissions or lifecycle rules, that would be the appropriate layer for them.
 
 ## 2. API Routes
 
-Use task-scoped endpoints, consistent with the existing `/tasks/{task_id}` resource paths in `backend/app/main.py`.
+Use task-scoped endpoints, consistent with the existing `/tasks/{task_id}` resource paths in `app/main.py`.
 
 ### Create a comment
 
@@ -63,9 +63,9 @@ No standalone comment routes, edit route, or delete route are proposed in this i
 
 ## 3. Tests
 
-Create `backend/tests/test_comments.py`, following the feature-per-test-file organization already used by `test_due_dates.py` and `test_tags.py`.
+Create `tests/test_comments.py`, following the feature-per-test-file organization already used by `test_due_dates.py` and `test_tags.py`.
 
-Use the existing `client` and `created_task` fixtures from `backend/tests/conftest.py`. Its autouse storage reset should be extended through the storage reset implementation so comments do not leak between tests.
+Use the existing `client` and `created_task` fixtures from `tests/conftest.py`. Its autouse storage reset should be extended through the storage reset implementation so comments do not leak between tests.
 
 ### Happy path
 
@@ -118,7 +118,7 @@ The task board’s `GET /tasks` request and task-card response rendering need no
 
 ## 5. Migration Notes
 
-`backend/app/storage.py` currently persists tasks in a module-level `_tasks: dict[str, TaskResponse]`; the README confirms this state is in-memory and lost on process restart.
+`app/storage.py` currently persists tasks in a module-level `_tasks: dict[str, TaskResponse]`; the README confirms this state is in-memory and lost on process restart.
 
 Add a separate in-memory comments structure keyed by comment ID, task ID, or both. A task-ID keyed collection is convenient for the proposed list endpoint; a comment-ID keyed collection is convenient if future standalone lookup/edit/delete routes are added. Either choice should preserve the existing task dictionary and existing `TaskResponse` shape.
 
@@ -145,14 +145,14 @@ There is no database or durable data migration required for the current implemen
 
 - `AGENTS.md`
 - `README.md`
-- `backend/app/models.py`
-- `backend/app/main.py`
-- `backend/app/storage.py`
-- `backend/app/business_rules.py`
-- `backend/tests/conftest.py`
-- `backend/tests/test_tasks.py`
-- `backend/tests/test_due_dates.py`
-- `backend/tests/test_tags.py`
+- `app/models.py`
+- `app/main.py`
+- `app/storage.py`
+- `app/business_rules.py`
+- `tests/conftest.py`
+- `tests/test_tasks.py`
+- `tests/test_due_dates.py`
+- `tests/test_tags.py`
 - `frontend/index.html`
 - `docs/midcourse/mini-adr.md`
 - `docs/midcourse/user-stories.md`
