@@ -15,7 +15,7 @@ RUN useradd --create-home --shell /usr/sbin/nologin app
 WORKDIR /app
 
 COPY --from=builder /root/.local /home/app/.local
-COPY backend/app ./app
+COPY app ./app
 
 RUN chown -R app:app /home/app/.local
 
